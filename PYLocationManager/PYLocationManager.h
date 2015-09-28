@@ -36,6 +36,9 @@ typedef void (^PYGetLocation)(CLLocationCoordinate2D);
 
 - (void)bindGpsDBPath:(NSString *)path;
 
+/*! if auto stop the server when get current location, default is NO */
+@property (nonatomic, assign)   BOOL                        autoStop;
+
 /*! the accuracy to filter the GPS locate. default is 100 meter */
 @property (nonatomic, assign)   double                      accuracy;
 

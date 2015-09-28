@@ -55,6 +55,7 @@ static PYLocationManager *_glocMgr = nil;
         // Default YueDong Office GPS
         _lastLocation = CLLocationCoordinate2DMake(31.236315 - 0.0065, 121.525282 - 0.006);
         self.accuracy = 100.f;
+        self.autoStop = NO;
         
         _pendingBlocks = [NSMutableArray array];
         
@@ -191,12 +192,15 @@ PYSingletonDefaultImplementation
     if ( status != kCLAuthorizationStatusAuthorized ) {
         [self stopService];
         
+        NSArray *_blockArray = nil;
         PYSingletonLock
-        for ( PYGetLocation locBlock in _pendingBlocks) {
-            locBlock( _lastLocation );
-        }
+        _blockArray = [_pendingBlocks copy];
         [_pendingBlocks removeAllObjects];
         PYSingletonUnLock
+        
+        for ( PYGetLocation locBlock in _blockArray) {
+            locBlock( _lastLocation );
+        }
     }
 }
 
@@ -208,17 +212,22 @@ PYSingletonDefaultImplementation
     if ( _newLoc.horizontalAccuracy > self.accuracy ) return;
     _lastLocation = [self gpsTransform:_newLoc.coordinate];
     
-    [self stopService];
+    if ( self.autoStop ) {
+        [self stopService];
+    }
     
     // Tell the listener
     [self invokeTargetWithEvent:kPYLocationEventUpdateLastLocation];
     
+    NSArray *_blockArray = nil;
     PYSingletonLock
-    for ( PYGetLocation locBlock in _pendingBlocks) {
-        locBlock( _lastLocation );
-    }
+    _blockArray = [_pendingBlocks copy];
     [_pendingBlocks removeAllObjects];
     PYSingletonUnLock
+    
+    for ( PYGetLocation locBlock in _blockArray) {
+        locBlock( _lastLocation );
+    }
 }
 
 - (void)getCurrentLocation:(PYGetLocation)location
