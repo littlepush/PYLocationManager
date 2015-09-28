@@ -4,5 +4,6 @@
 target 'PYLocationManager' do
 
 pod 'PYCore'
+pod 'PYData'
 
 end
