@@ -68,6 +68,9 @@ typedef void (^PYGetLocation)(CLLocationCoordinate2D);
 
 @interface PYLocationManager : PYActionDispatcher <PYService>
 
+/*! The location authorization status, default is Always */
+@property (nonatomic, assign)   CLAuthorizationStatus       authorizationStatus;
+
 - (void)bindGpsDBPath:(NSString *)path;
 
 /*! if auto stop the server when get current location, default is NO */

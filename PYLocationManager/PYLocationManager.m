@@ -90,6 +90,7 @@ static PYLocationManager *_glocMgr = nil;
         _lastLocation = CLLocationCoordinate2DMake(31.236315 - 0.0065, 121.525282 - 0.006);
         self.accuracy = 100.f;
         self.autoStop = NO;
+        self.authorizationStatus = kCLAuthorizationStatusAuthorizedAlways;
         
         _pendingBlocks = [NSMutableArray array];
         
@@ -136,7 +137,16 @@ PYSingletonDefaultImplementation
     _locationManager = [CLLocationManager object];
     _locationManager.delegate = self;
     
-    [_locationManager startUpdatingLocation];
+    if ( [CLLocationManager authorizationStatus] == kCLAuthorizationStatusNotDetermined ||
+        [CLLocationManager authorizationStatus] == kCLAuthorizationStatusRestricted) {
+        if ( self.authorizationStatus == kCLAuthorizationStatusAuthorizedAlways ) {
+            [_locationManager requestAlwaysAuthorization];
+        } else {
+            [_locationManager requestWhenInUseAuthorization];
+        }
+    } else {
+        [_locationManager startUpdatingLocation];
+    }
     return YES;
 }
 
@@ -223,7 +233,8 @@ PYSingletonDefaultImplementation
 - (void)locationManager:(CLLocationManager *)manager didChangeAuthorizationStatus:(CLAuthorizationStatus)status
 {
     // The user not allow us to get the gps
-    if ( status != kCLAuthorizationStatusAuthorized ) {
+    if ( status != kCLAuthorizationStatusAuthorizedAlways ||
+        status != kCLAuthorizationStatusAuthorizedWhenInUse ) {
         [self stopService];
         
         NSArray *_blockArray = nil;
@@ -235,6 +246,8 @@ PYSingletonDefaultImplementation
         for ( PYGetLocation locBlock in _blockArray) {
             locBlock( _lastLocation );
         }
+    } else {
+        [manager startUpdatingLocation];
     }
 }
 
@@ -267,7 +280,9 @@ PYSingletonDefaultImplementation
 - (void)getCurrentLocation:(PYGetLocation)location
 {
     PYSingletonLock
-    [_pendingBlocks addObject:location];
+    if ( location != nil ) {
+        [_pendingBlocks addObject:location];
+    }
     if ( [self isRunning] ) {
         return;
     } else {
