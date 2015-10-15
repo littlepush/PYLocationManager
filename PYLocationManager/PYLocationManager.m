@@ -235,17 +235,7 @@ PYSingletonDefaultImplementation
     // The user not allow us to get the gps
     if ( status != kCLAuthorizationStatusAuthorizedAlways ||
         status != kCLAuthorizationStatusAuthorizedWhenInUse ) {
-        //[self stopService];
-        
-        NSArray *_blockArray = nil;
-        PYSingletonLock
-        _blockArray = [_pendingBlocks copy];
-        [_pendingBlocks removeAllObjects];
-        PYSingletonUnLock
-        
-        for ( PYGetLocation locBlock in _blockArray) {
-            locBlock( _lastLocation );
-        }
+        // Should do nothing
     } else {
         [manager startUpdatingLocation];
     }
