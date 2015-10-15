@@ -68,6 +68,11 @@ typedef void (^PYGetLocation)(CLLocationCoordinate2D);
 
 @interface PYLocationManager : PYActionDispatcher <PYService>
 
+/*!
+ The location manager
+ */
+@property (nonatomic, readonly) CLLocationManager           *locationManager;
+
 /*! The location authorization status, default is Always */
 @property (nonatomic, assign)   CLAuthorizationStatus       authorizationStatus;
 

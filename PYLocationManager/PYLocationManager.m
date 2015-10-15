@@ -81,6 +81,8 @@ static PYLocationManager *_glocMgr = nil;
 
 @synthesize lastLocation = _lastLocation;
 
+@synthesize locationManager = _locationManager;
+
 // Singleton
 - (id)init
 {
