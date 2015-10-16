@@ -44,7 +44,8 @@
 #import "PYCore.h"
 #import <CoreLocation/CoreLocation.h>
 
-#define kPYLocationEventUpdateLastLocation     0x0001
+#define kPYLocationEventUpdateLastLocation      0x0001
+#define kPYLocationEventFailedUpdating          0x0002
 
 typedef NS_ENUM(NSInteger, PYMapType)
 {
@@ -72,6 +73,11 @@ typedef void (^PYGetLocation)(CLLocationCoordinate2D);
  The location manager
  */
 @property (nonatomic, readonly) CLLocationManager           *locationManager;
+
+/*!
+ If the user denied the location in settings
+ */
+@property (nonatomic, readonly) BOOL                        isUserDeniedLocation;
 
 /*! The location authorization status, default is Always */
 @property (nonatomic, assign)   CLAuthorizationStatus       authorizationStatus;

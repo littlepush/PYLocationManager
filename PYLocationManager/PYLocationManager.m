@@ -62,6 +62,7 @@ static PYLocationManager *_glocMgr = nil;
 @interface PYLocationManager () <CLLocationManagerDelegate>
 {
     CLLocationManager                   *_locationManager;
+    BOOL                                _authStatusPendingStarting;
     sqlite3                             *_dbForGpsCache;
     PYSqlStatement                      *_gpsQueryState;
     CLLocationCoordinate2D              _lastLocation;
@@ -122,10 +123,19 @@ static PYLocationManager *_glocMgr = nil;
 PYSingletonAllocWithZone(_glocMgr)
 PYSingletonDefaultImplementation
 
+@dynamic isUserDeniedLocation;
+- (BOOL)isUserDeniedLocation
+{
+    return ([CLLocationManager authorizationStatus] == kCLAuthorizationStatusDenied);
+}
+
 // PYServices
 
 - (BOOL)startService
 {
+    CLAuthorizationStatus _as = [CLLocationManager authorizationStatus];
+    if ( _as == kCLAuthorizationStatusDenied ) return NO;
+    
     if ( _dbForGpsCache == nil ) return NO;
     
     // Star to get current location
@@ -139,14 +149,17 @@ PYSingletonDefaultImplementation
     _locationManager = [CLLocationManager object];
     _locationManager.delegate = self;
     
-    if ( [CLLocationManager authorizationStatus] == kCLAuthorizationStatusNotDetermined ||
-        [CLLocationManager authorizationStatus] == kCLAuthorizationStatusRestricted) {
+    if ( _as < kCLAuthorizationStatusDenied ) { // Not Allowed
+        
+        _authStatusPendingStarting = YES;
         if ( self.authorizationStatus == kCLAuthorizationStatusAuthorizedAlways ) {
             [_locationManager requestAlwaysAuthorization];
         } else {
             [_locationManager requestWhenInUseAuthorization];
         }
     } else {
+        
+        _authStatusPendingStarting = NO;
         [_locationManager startUpdatingLocation];
     }
     return YES;
@@ -157,6 +170,7 @@ PYSingletonDefaultImplementation
     if ( _locationManager == nil ) return YES;
     [_locationManager stopUpdatingLocation];
     _locationManager = nil;
+    _authStatusPendingStarting = NO;
     return YES;
 }
 
@@ -213,15 +227,11 @@ PYSingletonDefaultImplementation
         [_gpsQueryState prepareForReading];
         _offLat = [_gpsQueryState getInOrderInt];
         _offLog = [_gpsQueryState getInOrderInt];
-        PYLog(@"offLat: %d, offLog: %d", _offLat, _offLog);
     }
     
     CLLocationCoordinate2D _newLocation;
     _newLocation.latitude = originGps.latitude + _offLat * 0.0001;
     _newLocation.longitude = originGps.longitude + _offLog * 0.0001;
-    PYLog(@"Old: %.7f,%.7f, New: %.7f,%.7f",
-          originGps.latitude, originGps.longitude,
-          _newLocation.latitude, _newLocation.longitude);
     return _newLocation;
     PYSingletonUnLock
 }
@@ -229,16 +239,14 @@ PYSingletonDefaultImplementation
 // Location Manager Delegate
 - (void)locationManager:(CLLocationManager *)manager didFailWithError:(NSError *)error
 {
-    PYLog(@"Loc Error: %@", error);
+    //PYLog(@"Loc Error: %@", error);
+    [self invokeTargetWithEvent:kPYLocationEventFailedUpdating exInfo:error];
 }
 
 - (void)locationManager:(CLLocationManager *)manager didChangeAuthorizationStatus:(CLAuthorizationStatus)status
 {
     // The user not allow us to get the gps
-    if ( status != kCLAuthorizationStatusAuthorizedAlways ||
-        status != kCLAuthorizationStatusAuthorizedWhenInUse ) {
-        // Should do nothing
-    } else {
+    if ( status > kCLAuthorizationStatusDenied && _authStatusPendingStarting ) {
         [manager startUpdatingLocation];
     }
 }
