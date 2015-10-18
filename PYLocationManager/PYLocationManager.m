@@ -73,9 +73,6 @@ static PYLocationManager *_glocMgr = nil;
     CLGeocoder                          *_geocoder;
 }
 
-// Transform GPS
-- (CLLocationCoordinate2D)gpsTransform:(CLLocationCoordinate2D)originGps;
-
 @end
 
 @implementation PYLocationManager

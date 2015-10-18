@@ -84,6 +84,9 @@ typedef void (^PYGetLocation)(CLLocationCoordinate2D);
 
 - (void)bindGpsDBPath:(NSString *)path;
 
+/*! Transform GPS in China */
+- (CLLocationCoordinate2D)gpsTransform:(CLLocationCoordinate2D)originGps;
+
 /*! if auto stop the server when get current location, default is NO */
 @property (nonatomic, assign)   BOOL                        autoStop;
 
