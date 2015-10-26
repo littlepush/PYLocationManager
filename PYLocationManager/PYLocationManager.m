@@ -42,6 +42,7 @@
 
 #import "PYLocationManager.h"
 #import "PYData.h"
+#import "PYCore.h"
 #import <UIKit/UIKit.h>
 
 static PYLocationManager *_glocMgr = nil;
@@ -311,20 +312,25 @@ PYSingletonDefaultImplementation
 - (NSString *)map:(PYMapType)map urlSchemeTo:(CLLocationCoordinate2D)dest withName:(NSString *)name
 {
     if ( map == PYMapTypeBaidu ) {
-        return [NSString stringWithFormat:@"baidumap://map/direction?origin=latlng:%f,%f|name:我的位置&destination=latlng:%f,%f|name:%@&mode=transit&src=%@",
-                self.lastLocation.latitude, self.lastLocation.longitude,
-                dest.latitude, dest.longitude,
-                name, [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleName"]];
+        NSString *_origin = [NSString stringWithFormat:@"latlng:%f,%f|name:%@",
+                             self.lastLocation.latitude, self.lastLocation.longitude, [@"我的位置" urlEncodeString]];
+        NSString *_dest = [NSString stringWithFormat:@"latlng:%f,%f|name:%@",
+                           dest.latitude, dest.longitude, [name urlEncodeString]];
+        
+        return [NSString stringWithFormat:@"baidumap://map/direction?origin=%@&destination=%@&mode=transit&src=%@",
+                [_origin urlEncodeString],
+                [_dest urlEncodeString],
+                [[[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleName"] urlEncodeString]];
     }
     if ( map == PYMapTypeAMap ) {
         return [NSString stringWithFormat:@"iosamap://navi?sourceApplication=%@&backScheme=applicationScheme&poiname=fangheng&poiid=BGVIS&lat=%f&lon=%f&dev=0&style=3",
-                name, dest.latitude, dest.longitude];
+                [name urlEncodeString], dest.latitude, dest.longitude];
     }
     if ( map == PYMapTypeGoogleMap ) {
         return [NSString stringWithFormat:@"comgooglemaps-x-callback://?saddr=&daddr=%f,%f&daddr=%f,%f&directionsmode=transit&x-success=yuedong_1_0://?resume=true&x-source=%@",
                 dest.latitude, dest.longitude,
                 self.lastLocation.latitude, self.lastLocation.longitude,
-                name];
+                [name urlEncodeString]];
     }
     return @"";
 }
